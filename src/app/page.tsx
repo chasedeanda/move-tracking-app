@@ -1,65 +1,93 @@
-import Image from "next/image";
+import Link from "next/link";
+import {
+  ArrowRight,
+  CheckCircle2,
+  Home as HomeIcon,
+  ListChecks,
+  Users,
+} from "lucide-react";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main className="min-h-dvh">
+      <section className="mx-auto flex min-h-dvh max-w-6xl flex-col justify-between px-4 py-6">
+        <nav className="flex items-center justify-between">
+          <Link className="flex items-center gap-2 font-semibold" href="/">
+            <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+              <HomeIcon className="size-5" aria-hidden="true" />
+            </span>
+            Move Nest
+          </Link>
+          <Button asChild variant="outline">
+            <Link href="/login">Sign in</Link>
+          </Button>
+        </nav>
+        <div className="grid items-end gap-8 py-14 md:grid-cols-[1.08fr_0.92fr] md:py-20">
+          <div className="space-y-7">
+            <Badge variant="secondary">Shared moving checklist</Badge>
+            <div className="space-y-4">
+              <h1 className="max-w-3xl text-5xl font-semibold leading-[1.02] tracking-normal md:text-7xl">
+                A calmer way to move together.
+              </h1>
+              <p className="max-w-2xl text-lg leading-8 text-muted-foreground">
+                Coordinate packing, cleaning, utilities, rooms, and move-day
+                tasks in one warm household workspace.
+              </p>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Button asChild size="lg">
+                <Link href="/login">
+                  Start your move
+                  <ArrowRight aria-hidden="true" />
+                </Link>
+              </Button>
+              <Button asChild size="lg" variant="secondary">
+                <Link href="/app">Open app</Link>
+              </Button>
+            </div>
+          </div>
+          <div className="grid gap-3">
+            {[
+              {
+                title: "What still needs doing",
+                body: "Tasks stay grouped by urgency, room, owner, and due date.",
+                icon: ListChecks,
+              },
+              {
+                title: "Who owns it",
+                body: "One clear assignee per task keeps the MVP simple.",
+                icon: Users,
+              },
+              {
+                title: "What is urgent",
+                body: "Overdue, due soon, and move-day work is easy to spot.",
+                icon: CheckCircle2,
+              },
+            ].map((item) => (
+              <Card key={item.title}>
+                <CardHeader className="flex-row items-start gap-4 space-y-0">
+                  <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-foreground">
+                    <item.icon className="size-5" aria-hidden="true" />
+                  </span>
+                  <div className="space-y-1">
+                    <CardTitle>{item.title}</CardTitle>
+                    <CardDescription>{item.body}</CardDescription>
+                  </div>
+                </CardHeader>
+              </Card>
+            ))}
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+      </section>
+    </main>
   );
 }
