@@ -199,7 +199,9 @@ export default async function WorkspacePage({ params }: WorkspacePageProps) {
                 </p>
               </div>
               <Button asChild variant="outline">
-                <Link href="/app/workspaces/new">Create another workspace</Link>
+                <Link href={`/app/workspaces/${workspace.id}/tasks`}>
+                  Open task list
+                </Link>
               </Button>
             </div>
           </CardContent>
