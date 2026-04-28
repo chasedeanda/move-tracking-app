@@ -27,10 +27,15 @@ function moveDayPath(workspaceId: string) {
   return `/app/workspaces/${workspaceId}/move-day`;
 }
 
+function roomsPath(workspaceId: string) {
+  return `/app/workspaces/${workspaceId}/rooms`;
+}
+
 function revalidateTaskSurfaces(workspaceId: string) {
   revalidatePath(workspacePath(workspaceId));
   revalidatePath(tasksPath(workspaceId));
   revalidatePath(moveDayPath(workspaceId));
+  revalidatePath(roomsPath(workspaceId));
 }
 
 function redirectWithError(workspaceId: string, message: string): never {
