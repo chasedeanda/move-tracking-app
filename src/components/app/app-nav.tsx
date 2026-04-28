@@ -5,6 +5,7 @@ import {
   Home,
   LayoutDashboard,
   PackageOpen,
+  Settings,
   Users,
 } from "lucide-react";
 
@@ -44,6 +45,14 @@ export async function AppNav() {
       icon: Users,
     },
   ];
+  const desktopNavItems = [
+    ...navItems,
+    {
+      href: workspaceId ? `${workspaceBase}/settings` : "/app",
+      label: "Settings",
+      icon: Settings,
+    },
+  ];
 
   return (
     <>
@@ -56,7 +65,7 @@ export async function AppNav() {
             Move Nest
           </Link>
           <nav aria-label="Workspace" className="hidden items-center gap-1 md:flex">
-            {navItems.map((item) => (
+            {desktopNavItems.map((item) => (
               <Button asChild key={item.label} size="sm" variant="ghost">
                 <Link href={item.href}>
                   <item.icon aria-hidden="true" />
