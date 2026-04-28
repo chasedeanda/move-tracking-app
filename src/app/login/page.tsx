@@ -47,9 +47,9 @@ type LoginPageProps = {
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   if (hasSupabaseConfig()) {
     const supabase = await createClient();
-    const { data } = await supabase.auth.getClaims();
+    const { data } = await supabase.auth.getUser();
 
-    if (data?.claims) {
+    if (data?.user) {
       redirect("/app");
     }
   }

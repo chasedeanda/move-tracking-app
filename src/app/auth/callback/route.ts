@@ -1,18 +1,67 @@
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
+import { createServerClient } from "@supabase/ssr";
+import type { EmailOtpType } from "@supabase/supabase-js";
 
-import { createClient } from "@/lib/supabase/server";
+import { getSupabaseConfig } from "@/lib/supabase/config";
+import { setSupabaseSessionCookies } from "@/lib/supabase/session-cookies";
 
-export async function GET(request: Request) {
-  const requestUrl = new URL(request.url);
+const otpTypes = new Set<EmailOtpType>([
+  "email",
+  "email_change",
+  "invite",
+  "magiclink",
+  "recovery",
+  "signup",
+]);
+
+export async function GET(request: NextRequest) {
+  const requestUrl = request.nextUrl;
   const code = requestUrl.searchParams.get("code");
+  const tokenHash = requestUrl.searchParams.get("token_hash");
+  const type = requestUrl.searchParams.get("type");
   const next = requestUrl.searchParams.get("next") ?? "/app";
+  const host = request.headers.get("host") ?? requestUrl.host;
+  const protocol = request.headers.get("x-forwarded-proto") ?? requestUrl.protocol;
+  const redirectTo = new URL(next, `${protocol.replace(":", "")}://${host}`);
+  const response = NextResponse.redirect(redirectTo);
+  const { url, publishableKey } = getSupabaseConfig();
+  const supabase = createServerClient(url, publishableKey, {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll();
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value, options }) => {
+          response.cookies.set(name, value, options);
+        });
+      },
+    },
+  });
 
   if (code) {
-    const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
-      return NextResponse.redirect(new URL(next, requestUrl.origin));
+      if (data.session) {
+        setSupabaseSessionCookies(response, url, data.session);
+      }
+
+      return response;
+    }
+  }
+
+  if (tokenHash && type && otpTypes.has(type as EmailOtpType)) {
+    const { data, error } = await supabase.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: type as EmailOtpType,
+    });
+
+    if (!error) {
+      if (data.session) {
+        setSupabaseSessionCookies(response, url, data.session);
+      }
+
+      return response;
     }
   }
 
