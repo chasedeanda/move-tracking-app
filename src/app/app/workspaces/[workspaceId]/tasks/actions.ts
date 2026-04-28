@@ -8,6 +8,11 @@ import {
   subtaskMutationSchema,
   taskMutationSchema,
 } from "@/lib/tasks/schema";
+import {
+  buildTaskCompletionUpdate,
+  buildTaskInsert,
+  buildTaskUpdate,
+} from "@/lib/tasks/mutations";
 import { createClient } from "@/lib/supabase/server";
 
 function tasksPath(workspaceId: string) {
@@ -123,22 +128,7 @@ export async function createTask(workspaceId: string, formData: FormData) {
   const { supabase, userId } = await getCurrentUserId();
   const { data, error } = await supabase
     .from("tasks")
-    .insert({
-      workspace_id: workspaceId,
-      room_id: parsed.data.roomId,
-      assignee_id: parsed.data.assigneeId,
-      title: parsed.data.title,
-      description: parsed.data.description,
-      status: parsed.data.status,
-      priority: parsed.data.priority,
-      category: parsed.data.category,
-      due_date: parsed.data.dueDate,
-      start_date: parsed.data.startDate,
-      notes: parsed.data.notes,
-      estimated_effort: parsed.data.estimatedEffort,
-      created_by: userId,
-      updated_by: userId,
-    })
+    .insert(buildTaskInsert(workspaceId, userId, parsed.data))
     .select("id")
     .single();
 
@@ -167,20 +157,7 @@ export async function updateTask(
   const { supabase, userId } = await getCurrentUserId();
   const { error } = await supabase
     .from("tasks")
-    .update({
-      room_id: parsed.data.roomId,
-      assignee_id: parsed.data.assigneeId,
-      title: parsed.data.title,
-      description: parsed.data.description,
-      status: parsed.data.status,
-      priority: parsed.data.priority,
-      category: parsed.data.category,
-      due_date: parsed.data.dueDate,
-      start_date: parsed.data.startDate,
-      notes: parsed.data.notes,
-      estimated_effort: parsed.data.estimatedEffort,
-      updated_by: userId,
-    })
+    .update(buildTaskUpdate(userId, parsed.data))
     .eq("id", taskId)
     .eq("workspace_id", workspaceId);
 
@@ -221,7 +198,7 @@ export async function toggleTaskComplete(
   const { supabase, userId } = await getCurrentUserId();
   const { error } = await supabase
     .from("tasks")
-    .update({ status: nextStatus, updated_by: userId })
+    .update(buildTaskCompletionUpdate(userId, nextStatus))
     .eq("id", taskId)
     .eq("workspace_id", workspaceId);
 
