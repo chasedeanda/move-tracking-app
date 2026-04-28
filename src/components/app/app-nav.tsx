@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   CheckSquare,
+  ClipboardCheck,
   Home,
   LayoutDashboard,
   PackageOpen,
@@ -31,6 +32,11 @@ export async function AppNav() {
       href: workspaceId ? `${workspaceBase}/rooms` : "/app",
       label: "Rooms",
       icon: PackageOpen,
+    },
+    {
+      href: workspaceId ? `${workspaceBase}/move-day` : "/app",
+      label: "Move Day",
+      icon: ClipboardCheck,
     },
     {
       href: workspaceId ? `${workspaceBase}/people` : "/app",
@@ -70,7 +76,7 @@ export async function AppNav() {
         aria-label="Main"
         className="fixed inset-x-0 bottom-0 z-40 border-t bg-card/95 px-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] pt-2 backdrop-blur md:hidden"
       >
-        <div className="mx-auto grid max-w-md grid-cols-4 gap-1">
+        <div className="mx-auto grid max-w-md grid-cols-5 gap-1">
           {navItems.map((item) => (
             <Link
               className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-2 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground"

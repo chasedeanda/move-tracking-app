@@ -18,6 +18,16 @@ function workspacePath(workspaceId: string) {
   return `/app/workspaces/${workspaceId}`;
 }
 
+function moveDayPath(workspaceId: string) {
+  return `/app/workspaces/${workspaceId}/move-day`;
+}
+
+function revalidateTaskSurfaces(workspaceId: string) {
+  revalidatePath(workspacePath(workspaceId));
+  revalidatePath(tasksPath(workspaceId));
+  revalidatePath(moveDayPath(workspaceId));
+}
+
 function redirectWithError(workspaceId: string, message: string): never {
   redirect(`${tasksPath(workspaceId)}?error=${encodeURIComponent(message)}`);
 }
@@ -97,8 +107,7 @@ export async function createQuickTask(workspaceId: string, formData: FormData) {
   }
 
   await logTaskActivity(workspaceId, data.id, "created");
-  revalidatePath(workspacePath(workspaceId));
-  revalidatePath(tasksPath(workspaceId));
+  revalidateTaskSurfaces(workspaceId);
 }
 
 export async function createTask(workspaceId: string, formData: FormData) {
@@ -138,8 +147,7 @@ export async function createTask(workspaceId: string, formData: FormData) {
   }
 
   await logTaskActivity(workspaceId, data.id, "created");
-  revalidatePath(workspacePath(workspaceId));
-  revalidatePath(tasksPath(workspaceId));
+  revalidateTaskSurfaces(workspaceId);
 }
 
 export async function updateTask(
@@ -181,8 +189,7 @@ export async function updateTask(
   }
 
   await logTaskActivity(workspaceId, taskId, "updated");
-  revalidatePath(workspacePath(workspaceId));
-  revalidatePath(tasksPath(workspaceId));
+  revalidateTaskSurfaces(workspaceId);
 }
 
 export async function assignTask(
@@ -203,8 +210,7 @@ export async function assignTask(
   }
 
   await logTaskActivity(workspaceId, taskId, "assigned");
-  revalidatePath(workspacePath(workspaceId));
-  revalidatePath(tasksPath(workspaceId));
+  revalidateTaskSurfaces(workspaceId);
 }
 
 export async function toggleTaskComplete(
@@ -228,8 +234,7 @@ export async function toggleTaskComplete(
     taskId,
     nextStatus === "done" ? "completed" : "updated",
   );
-  revalidatePath(workspacePath(workspaceId));
-  revalidatePath(tasksPath(workspaceId));
+  revalidateTaskSurfaces(workspaceId);
 }
 
 export async function deleteTask(workspaceId: string, taskId: string) {
@@ -246,8 +251,7 @@ export async function deleteTask(workspaceId: string, taskId: string) {
     redirectWithError(workspaceId, error.message);
   }
 
-  revalidatePath(workspacePath(workspaceId));
-  revalidatePath(tasksPath(workspaceId));
+  revalidateTaskSurfaces(workspaceId);
 }
 
 export async function createSubtask(
@@ -277,8 +281,7 @@ export async function createSubtask(
     redirectWithError(workspaceId, error.message);
   }
 
-  revalidatePath(workspacePath(workspaceId));
-  revalidatePath(tasksPath(workspaceId));
+  revalidateTaskSurfaces(workspaceId);
 }
 
 export async function updateSubtask(
@@ -308,8 +311,7 @@ export async function updateSubtask(
     redirectWithError(workspaceId, error.message);
   }
 
-  revalidatePath(workspacePath(workspaceId));
-  revalidatePath(tasksPath(workspaceId));
+  revalidateTaskSurfaces(workspaceId);
 }
 
 export async function toggleSubtask(
@@ -328,8 +330,7 @@ export async function toggleSubtask(
     redirectWithError(workspaceId, error.message);
   }
 
-  revalidatePath(workspacePath(workspaceId));
-  revalidatePath(tasksPath(workspaceId));
+  revalidateTaskSurfaces(workspaceId);
 }
 
 export async function deleteSubtask(workspaceId: string, subtaskId: string) {
@@ -344,6 +345,5 @@ export async function deleteSubtask(workspaceId: string, subtaskId: string) {
     redirectWithError(workspaceId, error.message);
   }
 
-  revalidatePath(workspacePath(workspaceId));
-  revalidatePath(tasksPath(workspaceId));
+  revalidateTaskSurfaces(workspaceId);
 }
