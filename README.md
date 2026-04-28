@@ -3,7 +3,7 @@
 Mobile-first collaborative moving checklist MVP for households coordinating a
 move. It covers workspace setup, seeded rooms and starter tasks, shared task
 management, dashboard KPIs, room progress, people workload, move-day checklist,
-and owner-managed collaborators.
+and owner-managed collaborators with email invitations.
 
 ## Tech Stack
 
@@ -80,6 +80,7 @@ The migrations create:
 - `profiles`
 - `workspaces`
 - `workspace_members`
+- `workspace_invitations`
 - `rooms`
 - `tasks`
 - `subtasks`
@@ -104,8 +105,10 @@ trusted as the authorization boundary.
 - Members can read workspace data only for workspaces they belong to.
 - Members can create, update, complete, assign, and delete tasks in their workspace.
 - Owners can update workspace settings and manage membership.
-- Membership management uses an owner-only RPC for adding existing signed-in
-  users by email.
+- Membership management uses owner-only RPCs for adding existing signed-in
+  users by email and creating pending invitations.
+- Invitation acceptance requires the signed-in profile email to match the
+  invited email.
 - Protected app routes call `supabase.auth.getUser()` in the app layout and
   redirect unauthenticated users to `/login`.
 
@@ -138,6 +141,7 @@ admin, repairs, donation, move-day, and post-move categories.
 - `/login`
 - `/auth/callback`
 - `/app`
+- `/app/invitations/accept`
 - `/app/workspaces/new`
 - `/app/workspaces/[workspaceId]`
 - `/app/workspaces/[workspaceId]/tasks`
@@ -163,6 +167,25 @@ Current coverage includes:
 - Supabase session-cookie parsing
 - migration-level RLS/access-control checks
 - protected app route check in the app layout
+
+## Invitations
+
+Workspace owners can invite collaborators from the People page. The app:
+
+1. Creates a pending `workspace_invitations` row.
+2. Sends a Supabase magic link to the invited email address.
+3. Redirects the recipient through `/auth/callback`.
+4. Accepts the invite at `/app/invitations/accept?token=...`.
+5. Adds the signed-in user to `workspace_members` when the signed-in email
+   matches the invitation email.
+
+Make sure Supabase Auth redirect allow-list entries include the callback URL
+used by each environment:
+
+```text
+http://127.0.0.1:4000/auth/callback
+https://your-vercel-domain.vercel.app/auth/callback
+```
 
 Run lint and production build:
 

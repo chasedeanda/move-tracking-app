@@ -1,5 +1,6 @@
 "use server";
 
+import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -39,6 +40,72 @@ export async function addWorkspaceMember(
     p_email: parsed.data.email,
     p_role: "member",
   });
+
+  if (error) {
+    redirectWithError(workspaceId, error.message);
+  }
+
+  revalidatePath(peoplePath(workspaceId));
+}
+
+export async function inviteWorkspaceMember(
+  workspaceId: string,
+  formData: FormData,
+) {
+  const parsed = addMemberSchema.safeParse({
+    email: String(formData.get("email") ?? ""),
+  });
+
+  if (!parsed.success) {
+    redirectWithError(
+      workspaceId,
+      parsed.error.issues[0]?.message ?? "Invitation could not be sent.",
+    );
+  }
+
+  const supabase = await createClient();
+  const { data: token, error } = await supabase.rpc("create_workspace_invitation", {
+    p_workspace_id: workspaceId,
+    p_email: parsed.data.email,
+  });
+
+  if (error || !token) {
+    redirectWithError(
+      workspaceId,
+      error?.message ?? "Invitation could not be created.",
+    );
+  }
+
+  const headerStore = await headers();
+  const origin = headerStore.get("origin") ?? "http://127.0.0.1:4000";
+  const acceptPath = `/app/invitations/accept?token=${token}`;
+  const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(acceptPath)}`;
+  const { error: emailError } = await supabase.auth.signInWithOtp({
+    email: parsed.data.email,
+    options: {
+      emailRedirectTo: redirectTo,
+      shouldCreateUser: true,
+    },
+  });
+
+  if (emailError) {
+    redirectWithError(workspaceId, emailError.message);
+  }
+
+  revalidatePath(peoplePath(workspaceId));
+  redirect(`${peoplePath(workspaceId)}?message=invite-sent`);
+}
+
+export async function cancelWorkspaceInvitation(
+  workspaceId: string,
+  invitationId: string,
+) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("workspace_invitations")
+    .delete()
+    .eq("workspace_id", workspaceId)
+    .eq("id", invitationId);
 
   if (error) {
     redirectWithError(workspaceId, error.message);

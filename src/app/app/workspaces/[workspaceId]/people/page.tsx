@@ -1,17 +1,20 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { format, parseISO } from "date-fns";
 import {
   ArrowLeft,
   AlertTriangle,
+  Clock3,
   Mail,
-  Plus,
+  Send,
   Trash2,
   UserRound,
   Users,
 } from "lucide-react";
 
 import {
-  addWorkspaceMember,
+  cancelWorkspaceInvitation,
+  inviteWorkspaceMember,
   removeWorkspaceMember,
 } from "@/app/app/workspaces/[workspaceId]/people/actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -25,7 +28,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import type { Profile, Task, Workspace, WorkspaceMember } from "@/lib/db/types";
+import type {
+  Profile,
+  Task,
+  Workspace,
+  WorkspaceInvitation,
+  WorkspaceMember,
+} from "@/lib/db/types";
 import { createClient } from "@/lib/supabase/server";
 import { getDueBucket } from "@/lib/tasks/sorting";
 
@@ -35,6 +44,7 @@ type PeoplePageProps = {
   }>;
   searchParams: Promise<{
     error?: string;
+    message?: string;
   }>;
 };
 
@@ -63,7 +73,7 @@ function memberStats(member: MemberView, tasks: Task[]) {
 
 export default async function PeoplePage({ params, searchParams }: PeoplePageProps) {
   const { workspaceId } = await params;
-  const { error: pageError } = await searchParams;
+  const { error: pageError, message } = await searchParams;
   const supabase = await createClient();
   const { data: userData, error: userError } = await supabase.auth.getUser();
 
@@ -114,6 +124,16 @@ export default async function PeoplePage({ params, searchParams }: PeoplePagePro
   }));
   const currentMember = members.find((member) => member.user_id === userData.user.id);
   const isOwner = currentMember?.role === "owner";
+  const invitationsResult = isOwner
+    ? await supabase
+        .from("workspace_invitations")
+        .select("*")
+        .eq("workspace_id", workspaceId)
+        .is("accepted_at", null)
+        .order("created_at", { ascending: false })
+        .returns<WorkspaceInvitation[]>()
+    : { data: [] as WorkspaceInvitation[] };
+  const invitations = invitationsResult.data ?? [];
   const unassignedIncomplete = tasks.filter(
     (task) => task.status !== "done" && !task.assignee_id,
   ).length;
@@ -140,6 +160,25 @@ export default async function PeoplePage({ params, searchParams }: PeoplePagePro
         <Alert variant="destructive">
           <AlertTitle>Member change failed</AlertTitle>
           <AlertDescription>{pageError}</AlertDescription>
+        </Alert>
+      ) : null}
+
+      {message === "invite-sent" ? (
+        <Alert>
+          <AlertTitle>Invitation sent</AlertTitle>
+          <AlertDescription>
+            Supabase sent a magic link. The invite will be accepted after that
+            person signs in with the invited email address.
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
+      {message === "invite-accepted" ? (
+        <Alert>
+          <AlertTitle>Invitation accepted</AlertTitle>
+          <AlertDescription>
+            The workspace membership has been added.
+          </AlertDescription>
         </Alert>
       ) : null}
 
@@ -187,15 +226,15 @@ export default async function PeoplePage({ params, searchParams }: PeoplePagePro
       {isOwner ? (
         <Card>
           <CardHeader>
-            <CardTitle>Add collaborator</CardTitle>
+            <CardTitle>Invite collaborator</CardTitle>
             <CardDescription>
-              Add an existing signed-in user by email. Invitation email flow is
-              outside this MVP.
+              Send a Supabase magic link that joins this workspace after the
+              recipient signs in.
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-5">
             <form
-              action={addWorkspaceMember.bind(null, workspaceId)}
+              action={inviteWorkspaceMember.bind(null, workspaceId)}
               className="flex flex-col gap-3 sm:flex-row"
             >
               <label className="sr-only" htmlFor="member-email">
@@ -210,10 +249,45 @@ export default async function PeoplePage({ params, searchParams }: PeoplePagePro
                 type="email"
               />
               <Button className="min-h-12">
-                <Plus aria-hidden="true" />
-                Add member
+                <Send aria-hidden="true" />
+                Send invite
               </Button>
             </form>
+            {invitations.length > 0 ? (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-medium">Pending invites</p>
+                  <Badge variant="secondary">{invitations.length}</Badge>
+                </div>
+                {invitations.map((invitation) => (
+                  <div
+                    className="flex flex-col gap-3 rounded-xl border bg-background p-3 sm:flex-row sm:items-center sm:justify-between"
+                    key={invitation.id}
+                  >
+                    <div className="min-w-0 space-y-1">
+                      <p className="truncate text-sm font-medium">
+                        {invitation.email}
+                      </p>
+                      <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Clock3 className="size-3.5" aria-hidden />
+                        Expires {format(parseISO(invitation.expires_at), "MMM d")}
+                      </p>
+                    </div>
+                    <form
+                      action={cancelWorkspaceInvitation.bind(
+                        null,
+                        workspaceId,
+                        invitation.id,
+                      )}
+                    >
+                      <Button size="sm" variant="outline">
+                        Cancel
+                      </Button>
+                    </form>
+                  </div>
+                ))}
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       ) : (

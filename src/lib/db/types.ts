@@ -57,6 +57,18 @@ export type WorkspaceMember = {
   joined_at: string;
 };
 
+export type WorkspaceInvitation = {
+  id: string;
+  workspace_id: string;
+  email: string;
+  role: MemberRole;
+  token: string;
+  invited_by: string;
+  accepted_at: string | null;
+  expires_at: string;
+  created_at: string;
+};
+
 export type Room = {
   id: string;
   workspace_id: string;

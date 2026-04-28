@@ -19,6 +19,7 @@ describe("Supabase access-control migrations", () => {
       "tasks",
       "subtasks",
       "activity_log",
+      "workspace_invitations",
     ]) {
       expect(migrations).toContain(
         `alter table public.${table} enable row level security;`,
@@ -37,6 +38,8 @@ describe("Supabase access-control migrations", () => {
     expect(migrations).toContain("public.is_workspace_owner(workspace_id)");
     expect(migrations).toContain("not public.is_workspace_owner(p_workspace_id)");
     expect(migrations).toContain("grant execute on function public.add_workspace_member_by_email");
+    expect(migrations).toContain("grant execute on function public.create_workspace_invitation");
+    expect(migrations).toContain("grant execute on function public.accept_workspace_invitation");
   });
 
   it("protects app routes from unauthenticated users in the app layout", () => {
