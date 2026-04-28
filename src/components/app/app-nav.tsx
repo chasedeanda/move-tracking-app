@@ -3,31 +3,62 @@ import {
   CheckSquare,
   Home,
   LayoutDashboard,
-  Settings,
+  PackageOpen,
   Users,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/app/app/actions";
+import { createClient } from "@/lib/supabase/server";
 
-const navItems = [
-  { href: "/app", label: "Home", icon: Home },
-  { href: "/app", label: "Tasks", icon: CheckSquare },
-  { href: "/app", label: "People", icon: Users },
-  { href: "/app", label: "Settings", icon: Settings },
-];
+export async function AppNav() {
+  const supabase = await createClient();
+  const { data: workspaces } = await supabase
+    .from("workspaces")
+    .select("id")
+    .order("created_at", { ascending: true })
+    .limit(1);
+  const workspaceId = workspaces?.[0]?.id;
+  const workspaceBase = workspaceId ? `/app/workspaces/${workspaceId}` : "/app";
+  const navItems = [
+    { href: workspaceBase, label: "Home", icon: Home },
+    {
+      href: workspaceId ? `${workspaceBase}/tasks` : "/app",
+      label: "Tasks",
+      icon: CheckSquare,
+    },
+    {
+      href: workspaceId ? `${workspaceBase}/rooms` : "/app",
+      label: "Rooms",
+      icon: PackageOpen,
+    },
+    {
+      href: workspaceId ? `${workspaceBase}/people` : "/app",
+      label: "People",
+      icon: Users,
+    },
+  ];
 
-export function AppNav() {
   return (
     <>
       <header className="sticky top-0 z-30 border-b bg-background/92 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
           <Link className="flex items-center gap-2 font-semibold" href="/app">
             <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
               <LayoutDashboard className="size-5" aria-hidden="true" />
             </span>
             Move Nest
           </Link>
+          <nav aria-label="Workspace" className="hidden items-center gap-1 md:flex">
+            {navItems.map((item) => (
+              <Button asChild key={item.label} size="sm" variant="ghost">
+                <Link href={item.href}>
+                  <item.icon aria-hidden="true" />
+                  {item.label}
+                </Link>
+              </Button>
+            ))}
+          </nav>
           <form action={signOut}>
             <Button size="sm" variant="outline">
               Sign out
