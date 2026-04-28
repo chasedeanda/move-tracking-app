@@ -3,7 +3,7 @@
 Mobile-first collaborative moving checklist MVP built with Next.js App Router,
 React, TypeScript, Tailwind CSS, shadcn/ui-style components, and Supabase.
 
-## Milestone 1 Status
+## Milestone Status
 
 Implemented:
 
@@ -13,8 +13,10 @@ Implemented:
 - Cookie refresh proxy for Supabase Auth.
 - Magic-link login page and `/auth/callback`.
 - Protected `/app` shell with mobile bottom navigation.
+- Supabase migration for profiles, workspaces, members, rooms, tasks, subtasks,
+  activity log, indexes, helper functions, and RLS policies.
 
-Milestone 2 will add the Supabase schema, migrations, indexes, and RLS policies.
+Milestone 3 will add workspace creation and starter template seeding in the app.
 
 ## Environment
 
@@ -29,10 +31,25 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-publishable-or-anon-key
 
 ```bash
 npm install
-npm run dev
+npm run dev -- --port 4000
 ```
 
-Open http://localhost:3000.
+Open http://localhost:4000.
+
+## Database
+
+Migration files live in `supabase/migrations`.
+
+Apply them with the Supabase CLI after linking a project:
+
+```bash
+supabase link --project-ref your-project-ref
+supabase db push
+```
+
+The initial migration enables RLS on all public tables. Workspace-scoped data is
+readable and mutable only when `auth.uid()` is a member of that workspace.
+Workspace settings and membership management are owner-only.
 
 ## Checks
 
