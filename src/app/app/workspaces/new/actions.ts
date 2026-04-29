@@ -22,7 +22,7 @@ export async function createWorkspace(formData: FormData) {
     currentAddress: String(formData.get("currentAddress") ?? ""),
     newAddress: String(formData.get("newAddress") ?? ""),
     timezone: String(formData.get("timezone") ?? ""),
-    seedTemplate: formData.get("seedTemplate") === "on",
+    seedTemplate: false,
   };
 
   const parsed = createWorkspaceSchema.safeParse(payload);
@@ -51,5 +51,5 @@ export async function createWorkspace(formData: FormData) {
     redirect(`/app/workspaces/new?error=${encodeURIComponent(message)}`);
   }
 
-  redirect(`/app/workspaces/${workspaceId}`);
+  redirect(`/app/workspaces/${workspaceId}/setup/rooms`);
 }

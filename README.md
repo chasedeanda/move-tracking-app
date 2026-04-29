@@ -208,11 +208,16 @@ npm run build
 NEXT_PUBLIC_SUPABASE_URL
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 NEXT_PUBLIC_SITE_URL
+OPENAI_API_KEY
+OPENAI_ROOM_SCAN_MODEL
 ```
 
 `NEXT_PUBLIC_SITE_URL` should be the canonical deployed origin, for example
 `https://move-tracking-app.vercel.app`. This keeps Supabase magic links from
 falling back to localhost in production emails.
+
+`OPENAI_API_KEY` enables Room Scan. `OPENAI_ROOM_SCAN_MODEL` defaults to
+`gpt-4.1` when omitted.
 
 4. In Supabase Auth settings, set the production Site URL and add redirect URLs:
 

@@ -1,4 +1,4 @@
-import { CalendarDays, Home, PackageCheck } from "lucide-react";
+import { CalendarDays, Home, MapPinned } from "lucide-react";
 
 import { createWorkspace } from "@/app/app/workspaces/new/actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -11,7 +11,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -35,8 +34,8 @@ export default async function NewWorkspacePage({
             Start your shared move checklist
           </h1>
           <p className="text-muted-foreground">
-            Add the basic move details now. The starter template can give your
-            household rooms and first tasks in one step.
+            Add the basic move details first. Next, you will choose the rooms
+            you are moving and scan each room for a specific checklist.
           </p>
         </div>
       </section>
@@ -139,30 +138,23 @@ export default async function NewWorkspacePage({
               </div>
             </div>
 
-            <label
-              className="flex min-h-16 items-start gap-3 rounded-xl border bg-muted/40 p-4"
-              htmlFor="seedTemplate"
-            >
-              <Checkbox
-                className="mt-1"
-                defaultChecked
-                id="seedTemplate"
-                name="seedTemplate"
-              />
+            <div className="flex min-h-16 items-start gap-3 rounded-xl border bg-muted/40 p-4">
+              <div className="mt-1 flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                <MapPinned className="size-3" aria-hidden="true" />
+              </div>
               <span className="space-y-1">
                 <span className="flex items-center gap-2 text-sm font-medium">
-                  <PackageCheck className="size-4" aria-hidden="true" />
-                  Add starter rooms and tasks
+                  Guided room setup comes next
                 </span>
                 <span className="block text-sm text-muted-foreground">
-                  Includes the requested default rooms plus packing, cleaning,
-                  utilities, decluttering, move-day, and post-move tasks.
+                  Pick the rooms in your home, add any custom spaces, then use
+                  Room Scan to turn photos and notes into room-specific tasks.
                 </span>
               </span>
-            </label>
+            </div>
 
             <Button className="min-h-12 w-full text-base" size="lg">
-              Create workspace
+              Continue to room setup
             </Button>
           </form>
         </CardContent>

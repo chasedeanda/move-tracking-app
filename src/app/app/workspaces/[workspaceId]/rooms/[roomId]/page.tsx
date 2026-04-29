@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ClipboardCheck } from "lucide-react";
+import { ArrowLeft, Camera, ClipboardCheck } from "lucide-react";
 
 import {
   ChecklistDetailLink,
@@ -77,10 +77,20 @@ export default async function RoomDetailPage({ params }: RoomDetailPageProps) {
         </Button>
         <div className="space-y-2">
           <Badge variant="secondary">{workspace.name}</Badge>
-          <h1 className="text-3xl font-semibold tracking-normal">{room.name}</h1>
-          <p className="text-muted-foreground">
-            A focused room checklist for packing, cleaning, and wrap-up tasks.
-          </p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div className="space-y-2">
+              <h1 className="text-3xl font-semibold tracking-normal">{room.name}</h1>
+              <p className="text-muted-foreground">
+                A focused room checklist for packing, cleaning, and wrap-up tasks.
+              </p>
+            </div>
+            <Button asChild className="min-h-12">
+              <Link href={`/app/workspaces/${workspaceId}/rooms/${room.id}/scan`}>
+                <Camera className="size-4" aria-hidden />
+                Scan room
+              </Link>
+            </Button>
+          </div>
         </div>
       </section>
 

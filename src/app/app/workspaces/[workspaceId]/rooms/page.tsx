@@ -68,10 +68,19 @@ export default async function RoomsPage({ params }: RoomsPageProps) {
         </Button>
         <div className="space-y-2">
           <Badge variant="secondary">{workspace.name}</Badge>
-          <h1 className="text-3xl font-semibold tracking-normal">Rooms</h1>
-          <p className="text-muted-foreground">
-            See which areas are packed, cleaned, or falling behind.
-          </p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div className="space-y-2">
+              <h1 className="text-3xl font-semibold tracking-normal">Rooms</h1>
+              <p className="text-muted-foreground">
+                See which areas are packed, cleaned, or falling behind.
+              </p>
+            </div>
+            <Button asChild variant="outline">
+              <Link href={`/app/workspaces/${workspaceId}/setup/rooms`}>
+                Add rooms
+              </Link>
+            </Button>
+          </div>
         </div>
       </section>
 
@@ -171,8 +180,18 @@ export default async function RoomsPage({ params }: RoomsPageProps) {
         </div>
       ) : (
         <Card className="border-dashed">
-          <CardContent className="py-10 text-center text-sm text-muted-foreground">
-            No rooms yet. Create a seeded workspace to start with the default room list.
+          <CardContent className="space-y-4 py-10 text-center">
+            <div>
+              <p className="font-medium">No rooms yet</p>
+              <p className="text-sm text-muted-foreground">
+                Use guided room setup to choose the spaces in this move.
+              </p>
+            </div>
+            <Button asChild>
+              <Link href={`/app/workspaces/${workspaceId}/setup/rooms`}>
+                Start room setup
+              </Link>
+            </Button>
           </CardContent>
         </Card>
       )}
