@@ -329,7 +329,11 @@ export default async function WorkspacePage({
           <CardContent className="space-y-4">
             {roomsNeedingAttention.length > 0 ? (
               roomsNeedingAttention.map((roomProgress) => (
-                <div className="space-y-2" key={roomProgress.room.id}>
+                <Link
+                  className="block space-y-2 rounded-xl border bg-background p-3 transition-colors hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  href={`/app/workspaces/${workspace.id}/rooms/${roomProgress.room.id}`}
+                  key={roomProgress.room.id}
+                >
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <p className="truncate font-medium">{roomProgress.room.name}</p>
@@ -357,7 +361,7 @@ export default async function WorkspacePage({
                       }}
                     />
                   </div>
-                </div>
+                </Link>
               ))
             ) : (
               <div className="rounded-xl border border-dashed p-5 text-sm text-muted-foreground">

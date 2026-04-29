@@ -91,8 +91,11 @@ The migrations create:
 
 For local magic-link auth, configure Supabase Auth URLs:
 
-- Site URL: `http://127.0.0.1:4000`
-- Redirect URL: `http://127.0.0.1:4000/auth/callback`
+- Site URL: your production URL, for example `https://move-tracking-app.vercel.app`
+- Redirect URLs:
+  - `http://127.0.0.1:4000/**`
+  - `http://localhost:4000/**`
+  - `https://your-vercel-domain.vercel.app/**`
 
 The app uses `/auth/callback` to exchange Supabase magic-link tokens and then
 redirects into `/app`.
@@ -183,8 +186,9 @@ Make sure Supabase Auth redirect allow-list entries include the callback URL
 used by each environment:
 
 ```text
-http://127.0.0.1:4000/auth/callback
-https://your-vercel-domain.vercel.app/auth/callback
+http://127.0.0.1:4000/**
+http://localhost:4000/**
+https://your-vercel-domain.vercel.app/**
 ```
 
 Run lint and production build:
@@ -203,13 +207,20 @@ npm run build
 ```bash
 NEXT_PUBLIC_SUPABASE_URL
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+NEXT_PUBLIC_SITE_URL
 ```
 
-4. In Supabase Auth settings, add production URLs:
+`NEXT_PUBLIC_SITE_URL` should be the canonical deployed origin, for example
+`https://move-tracking-app.vercel.app`. This keeps Supabase magic links from
+falling back to localhost in production emails.
+
+4. In Supabase Auth settings, set the production Site URL and add redirect URLs:
 
 ```text
 https://your-vercel-domain.vercel.app
-https://your-vercel-domain.vercel.app/auth/callback
+https://your-vercel-domain.vercel.app/**
+http://127.0.0.1:4000/**
+http://localhost:4000/**
 ```
 
 5. Deploy from Vercel.

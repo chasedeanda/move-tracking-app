@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
+import { getAuthCallbackUrl } from "@/lib/auth/redirects";
 import { createClient } from "@/lib/supabase/server";
 
 const addMemberSchema = z.object({
@@ -77,13 +78,11 @@ export async function inviteWorkspaceMember(
   }
 
   const headerStore = await headers();
-  const origin = headerStore.get("origin") ?? "http://127.0.0.1:4000";
   const acceptPath = `/app/invitations/accept?token=${token}`;
-  const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(acceptPath)}`;
   const { error: emailError } = await supabase.auth.signInWithOtp({
     email: parsed.data.email,
     options: {
-      emailRedirectTo: redirectTo,
+      emailRedirectTo: getAuthCallbackUrl(headerStore, acceptPath),
       shouldCreateUser: true,
     },
   });

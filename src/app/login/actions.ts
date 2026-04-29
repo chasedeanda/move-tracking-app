@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
+import { getAuthCallbackUrl } from "@/lib/auth/redirects";
 import { hasSupabaseConfig } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
 
@@ -25,12 +26,11 @@ export async function signInWithMagicLink(formData: FormData) {
   }
 
   const headerStore = await headers();
-  const origin = headerStore.get("origin") ?? "http://localhost:3000";
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithOtp({
     email: parsed.data.email,
     options: {
-      emailRedirectTo: `${origin}/auth/callback?next=/app`,
+      emailRedirectTo: getAuthCallbackUrl(headerStore),
     },
   });
 
