@@ -30,6 +30,21 @@ describe("auth redirect helpers", () => {
     );
   });
 
+  it("does not let a localhost site URL override a production request host", () => {
+    process.env.NEXT_PUBLIC_SITE_URL = "http://127.0.0.1:4000";
+    delete process.env.NEXT_PUBLIC_VERCEL_URL;
+    delete process.env.VERCEL_URL;
+
+    expect(
+      getAuthCallbackUrl(
+        headers({
+          "x-forwarded-host": "move-tracking-app.vercel.app",
+          "x-forwarded-proto": "https",
+        }),
+      ),
+    ).toBe("https://move-tracking-app.vercel.app/auth/callback?next=%2Fapp");
+  });
+
   it("falls back to forwarded host instead of a hard-coded localhost origin", () => {
     delete process.env.NEXT_PUBLIC_SITE_URL;
     delete process.env.NEXT_PUBLIC_VERCEL_URL;

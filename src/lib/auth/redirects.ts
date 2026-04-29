@@ -11,16 +11,13 @@ function normalizeOrigin(value: string) {
   return new URL(withProtocol).origin;
 }
 
-export function getAppOrigin(headers?: HeaderReader) {
-  const configuredOrigin =
-    process.env.NEXT_PUBLIC_SITE_URL ??
-    process.env.NEXT_PUBLIC_VERCEL_URL ??
-    process.env.VERCEL_URL;
+function isLocalOrigin(origin: string) {
+  const { hostname } = new URL(normalizeOrigin(origin));
 
-  if (configuredOrigin) {
-    return normalizeOrigin(configuredOrigin);
-  }
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
+}
 
+function getHeaderOrigin(headers?: HeaderReader) {
   const forwardedHost = headers?.get("x-forwarded-host");
   const host = forwardedHost ?? headers?.get("host");
 
@@ -38,6 +35,30 @@ export function getAppOrigin(headers?: HeaderReader) {
 
   if (requestOrigin) {
     return normalizeOrigin(requestOrigin);
+  }
+
+  return null;
+}
+
+export function getAppOrigin(headers?: HeaderReader) {
+  const headerOrigin = getHeaderOrigin(headers);
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+
+  if (
+    siteUrl &&
+    !(headerOrigin && isLocalOrigin(siteUrl) && !isLocalOrigin(headerOrigin))
+  ) {
+    return normalizeOrigin(siteUrl);
+  }
+
+  const vercelOrigin = process.env.NEXT_PUBLIC_VERCEL_URL ?? process.env.VERCEL_URL;
+
+  if (vercelOrigin) {
+    return normalizeOrigin(vercelOrigin);
+  }
+
+  if (headerOrigin) {
+    return headerOrigin;
   }
 
   return "http://127.0.0.1:4000";
