@@ -40,6 +40,7 @@ describe("Supabase access-control migrations", () => {
     expect(migrations).toContain("grant execute on function public.add_workspace_member_by_email");
     expect(migrations).toContain("grant execute on function public.create_workspace_invitation");
     expect(migrations).toContain("grant execute on function public.accept_workspace_invitation");
+    expect(migrations).toContain("grant execute on function public.accept_pending_workspace_invitation_for_current_user");
   });
 
   it("protects app routes from unauthenticated users in the app layout", () => {
