@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import { getAppOrigin, getAuthCallbackUrl } from "@/lib/auth/redirects";
+import {
+  decodeNextPath,
+  getAppOrigin,
+  getAuthCallbackUrl,
+} from "@/lib/auth/redirects";
 
 function headers(values: Record<string, string>) {
   return {
@@ -42,7 +46,9 @@ describe("auth redirect helpers", () => {
           "x-forwarded-proto": "https",
         }),
       ),
-    ).toBe("https://move-tracking-app.vercel.app/auth/callback?next=%2Fapp");
+    ).toMatch(
+      /^https:\/\/move-tracking-app\.vercel\.app\/auth\/callback\/next_/,
+    );
   });
 
   it("falls back to forwarded host instead of a hard-coded localhost origin", () => {
@@ -57,19 +63,28 @@ describe("auth redirect helpers", () => {
           "x-forwarded-proto": "https",
         }),
       ),
-    ).toBe("https://move-tracking-app.vercel.app/auth/callback?next=%2Fapp");
+    ).toMatch(
+      /^https:\/\/move-tracking-app\.vercel\.app\/auth\/callback\/next_/,
+    );
   });
 
   it("encodes invitation accept paths into callback URLs", () => {
     process.env.NEXT_PUBLIC_SITE_URL = "https://move-tracking-app.vercel.app";
 
-    expect(
+    const callbackUrl = new URL(
       getAuthCallbackUrl(
         headers({ host: "move-tracking-app.vercel.app" }),
         "/app/invitations/accept?token=abc123",
       ),
-    ).toBe(
-      "https://move-tracking-app.vercel.app/auth/callback?next=%2Fapp%2Finvitations%2Faccept%3Ftoken%3Dabc123",
     );
+
+    expect(callbackUrl.search).toBe("");
+    expect(decodeNextPath(callbackUrl.pathname.split("/").at(-1) ?? null)).toBe(
+      "/app/invitations/accept?token=abc123",
+    );
+  });
+
+  it("decodes invalid callback paths to the app home", () => {
+    expect(decodeNextPath("not-valid")).toBe("/app");
   });
 });

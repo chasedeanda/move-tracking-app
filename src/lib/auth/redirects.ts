@@ -2,6 +2,8 @@ type HeaderReader = {
   get(name: string): string | null;
 };
 
+const nextPrefix = "next_";
+
 function normalizeOrigin(value: string) {
   const trimmedValue = value.trim().replace(/\/+$/, "");
   const withProtocol = /^https?:\/\//i.test(trimmedValue)
@@ -64,9 +66,32 @@ export function getAppOrigin(headers?: HeaderReader) {
   return "http://127.0.0.1:4000";
 }
 
+function encodeNextPath(nextPath: string) {
+  return `${nextPrefix}${Buffer.from(nextPath, "utf8").toString("base64url")}`;
+}
+
+export function decodeNextPath(encodedNextPath: string | null) {
+  if (!encodedNextPath?.startsWith(nextPrefix)) {
+    return "/app";
+  }
+
+  try {
+    const decoded = Buffer.from(
+      encodedNextPath.slice(nextPrefix.length),
+      "base64url",
+    ).toString("utf8");
+
+    return decoded.startsWith("/") ? decoded : "/app";
+  } catch {
+    return "/app";
+  }
+}
+
 export function getAuthCallbackUrl(headers: HeaderReader, nextPath = "/app") {
-  const callbackUrl = new URL("/auth/callback", getAppOrigin(headers));
-  callbackUrl.searchParams.set("next", nextPath);
+  const callbackUrl = new URL(
+    `/auth/callback/${encodeNextPath(nextPath)}`,
+    getAppOrigin(headers),
+  );
 
   return callbackUrl.toString();
 }
