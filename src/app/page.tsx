@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   ArrowRight,
   CheckCircle2,
@@ -15,8 +16,22 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { getRootTokenRedirect } from "@/lib/auth/root-token-redirect";
 
-export default function Home() {
+type HomeProps = {
+  searchParams: Promise<{
+    token_hash?: string;
+    type?: string;
+  }>;
+};
+
+export default async function Home({ searchParams }: HomeProps) {
+  const tokenRedirect = getRootTokenRedirect(await searchParams);
+
+  if (tokenRedirect) {
+    redirect(tokenRedirect);
+  }
+
   return (
     <main className="min-h-dvh">
       <section className="mx-auto flex min-h-dvh max-w-6xl flex-col justify-between px-4 py-6">
