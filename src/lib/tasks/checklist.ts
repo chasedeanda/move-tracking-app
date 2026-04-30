@@ -12,6 +12,8 @@ export type ChecklistGroups<T extends Task> = {
   totalCount: number;
 };
 
+export type RoomChecklistScope = "mine" | "all";
+
 export function isUrgentChecklistTask(
   task: Task,
   today: Date = startOfToday(),
@@ -52,6 +54,20 @@ export function getChecklistGroups<T extends Task>(
       totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0,
     totalCount,
   };
+}
+
+export function filterRoomChecklistTasks<T extends Task>(
+  tasks: T[],
+  currentUserId: string,
+  scope: RoomChecklistScope = "mine",
+) {
+  if (scope === "all") {
+    return tasks;
+  }
+
+  return tasks.filter(
+    (task) => !task.assignee_id || task.assignee_id === currentUserId,
+  );
 }
 
 export function inferRoomChecklistCategory(roomName: string): TaskCategory {

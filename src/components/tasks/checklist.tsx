@@ -4,6 +4,7 @@ import type { LucideIcon } from "lucide-react";
 import { CalendarClock, CheckCircle2, Circle, Plus } from "lucide-react";
 
 import {
+  assignTask,
   createTask,
   toggleTaskComplete,
 } from "@/app/app/workspaces/[workspaceId]/tasks/actions";
@@ -19,6 +20,18 @@ import { Input } from "@/components/ui/input";
 import type { Task, TaskCategory, TaskEffort, TaskPriority } from "@/lib/db/types";
 import { getDueBucket } from "@/lib/tasks/sorting";
 import { cn } from "@/lib/utils";
+
+export type ChecklistMember = {
+  user_id: string;
+  profile: {
+    display_name: string | null;
+    email: string;
+  } | null;
+};
+
+function memberName(member: ChecklistMember) {
+  return member.profile?.display_name || member.profile?.email || "Household member";
+}
 
 function labelFromValue(value: string) {
   return value
@@ -140,11 +153,13 @@ export function ChecklistQuickAdd({
 export function ChecklistTaskCard({
   completeLabel = "Complete task",
   incompleteLabel = "Mark task incomplete",
+  members = [],
   task,
   workspaceId,
 }: {
   completeLabel?: string;
   incompleteLabel?: string;
+  members?: ChecklistMember[];
   task: Task;
   workspaceId: string;
 }) {
@@ -211,6 +226,35 @@ export function ChecklistTaskCard({
               </Badge>
             ) : null}
           </div>
+          {members.length > 0 ? (
+            <form
+              action={assignTask.bind(null, workspaceId, task.id)}
+              className="flex flex-col gap-2 rounded-xl bg-muted/45 p-2 sm:flex-row sm:items-center"
+            >
+              <label
+                className="text-xs font-medium text-muted-foreground sm:min-w-16"
+                htmlFor={`checklist-assign-${task.id}`}
+              >
+                Owner
+              </label>
+              <select
+                className="flex h-11 min-w-0 flex-1 rounded-lg border bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                defaultValue={task.assignee_id ?? ""}
+                id={`checklist-assign-${task.id}`}
+                name="assigneeId"
+              >
+                <option value="">Unassigned</option>
+                {members.map((member) => (
+                  <option key={member.user_id} value={member.user_id}>
+                    {memberName(member)}
+                  </option>
+                ))}
+              </select>
+              <Button className="min-h-11" type="submit" variant="outline">
+                Assign
+              </Button>
+            </form>
+          ) : null}
         </div>
       </CardContent>
     </Card>
@@ -223,6 +267,7 @@ export function ChecklistSection({
   emptyIcon: EmptyIcon,
   emptyTitle,
   incompleteLabel,
+  members,
   tasks,
   title,
   variant = "secondary",
@@ -233,6 +278,7 @@ export function ChecklistSection({
   emptyIcon?: LucideIcon;
   emptyTitle?: string;
   incompleteLabel?: string;
+  members?: ChecklistMember[];
   tasks: Task[];
   title: string;
   variant?: "secondary" | "destructive";
@@ -251,6 +297,7 @@ export function ChecklistSection({
               completeLabel={completeLabel}
               incompleteLabel={incompleteLabel}
               key={task.id}
+              members={members}
               task={task}
               workspaceId={workspaceId}
             />

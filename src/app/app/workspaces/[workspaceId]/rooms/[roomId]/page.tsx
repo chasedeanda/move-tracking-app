@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Camera, ClipboardCheck } from "lucide-react";
 
 import {
+  ChecklistMember,
   ChecklistDetailLink,
   ChecklistProgressCard,
   ChecklistQuickAdd,
@@ -10,11 +11,13 @@ import {
 } from "@/components/tasks/checklist";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { Room, Task, Workspace } from "@/lib/db/types";
+import type { Profile, Room, Task, Workspace, WorkspaceMember } from "@/lib/db/types";
 import { createClient } from "@/lib/supabase/server";
 import {
+  filterRoomChecklistTasks,
   getChecklistGroups,
   inferRoomChecklistCategory,
+  type RoomChecklistScope,
 } from "@/lib/tasks/checklist";
 
 type RoomDetailPageProps = {
@@ -22,11 +25,29 @@ type RoomDetailPageProps = {
     workspaceId: string;
     roomId: string;
   }>;
+  searchParams: Promise<{
+    scope?: string;
+  }>;
 };
 
-export default async function RoomDetailPage({ params }: RoomDetailPageProps) {
+function memberName(member: ChecklistMember) {
+  return member.profile?.display_name || member.profile?.email || "Household member";
+}
+
+export default async function RoomDetailPage({
+  params,
+  searchParams,
+}: RoomDetailPageProps) {
   const { workspaceId, roomId } = await params;
+  const { scope } = await searchParams;
+  const checklistScope: RoomChecklistScope = scope === "all" ? "all" : "mine";
   const supabase = await createClient();
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+
+  if (userError || !userData.user) {
+    notFound();
+  }
+
   const { data: workspace, error: workspaceError } = await supabase
     .from("workspaces")
     .select("*")
@@ -37,7 +58,7 @@ export default async function RoomDetailPage({ params }: RoomDetailPageProps) {
     notFound();
   }
 
-  const [roomResult, tasksResult] = await Promise.all([
+  const [roomResult, tasksResult, membersResult] = await Promise.all([
     supabase
       .from("rooms")
       .select("*")
@@ -50,6 +71,12 @@ export default async function RoomDetailPage({ params }: RoomDetailPageProps) {
       .eq("workspace_id", workspaceId)
       .eq("room_id", roomId)
       .returns<Task[]>(),
+    supabase
+      .from("workspace_members")
+      .select("*")
+      .eq("workspace_id", workspaceId)
+      .order("joined_at", { ascending: true })
+      .returns<WorkspaceMember[]>(),
   ]);
 
   if (roomResult.error || !roomResult.data) {
@@ -57,13 +84,38 @@ export default async function RoomDetailPage({ params }: RoomDetailPageProps) {
   }
 
   const room = roomResult.data;
+  const roomTasks = tasksResult.data ?? [];
+  const visibleTasks = filterRoomChecklistTasks(
+    roomTasks,
+    userData.user.id,
+    checklistScope,
+  );
+  const hiddenAssignedTaskCount = roomTasks.length - visibleTasks.length;
+  const membersRaw = membersResult.data ?? [];
+  const profileIds = membersRaw.map((member) => member.user_id);
+  const profilesResult =
+    profileIds.length > 0
+      ? await supabase
+          .from("profiles")
+          .select("*")
+          .in("id", profileIds)
+          .returns<Profile[]>()
+      : { data: [] as Profile[] };
+  const profilesById = new Map(
+    (profilesResult.data ?? []).map((profile) => [profile.id, profile]),
+  );
+  const members: ChecklistMember[] = membersRaw.map((member) => ({
+    user_id: member.user_id,
+    profile: profilesById.get(member.user_id) ?? null,
+  }));
+  const currentMember = members.find((member) => member.user_id === userData.user.id);
   const {
     completedCount,
     doneTasks,
     openTasks,
     totalCount,
     urgentTasks,
-  } = getChecklistGroups(tasksResult.data ?? []);
+  } = getChecklistGroups(visibleTasks);
   const quickAddCategory = inferRoomChecklistCategory(room.name);
 
   return (
@@ -94,6 +146,40 @@ export default async function RoomDetailPage({ params }: RoomDetailPageProps) {
         </div>
       </section>
 
+      <div className="flex flex-col gap-3 rounded-xl border bg-muted/35 p-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-1">
+          <p className="text-sm font-medium">
+            Showing{" "}
+            {checklistScope === "all"
+              ? "everyone's tasks"
+              : `tasks for ${currentMember ? memberName(currentMember) : "you"} and unassigned`}
+          </p>
+          {hiddenAssignedTaskCount > 0 && checklistScope !== "all" ? (
+            <p className="text-sm text-muted-foreground">
+              {hiddenAssignedTaskCount} task{hiddenAssignedTaskCount === 1 ? "" : "s"} assigned to others hidden.
+            </p>
+          ) : null}
+        </div>
+        <div className="grid grid-cols-2 gap-2 sm:flex">
+          <Button
+            asChild
+            variant={checklistScope === "mine" ? "default" : "outline"}
+          >
+            <Link href={`/app/workspaces/${workspaceId}/rooms/${room.id}`}>
+              Mine + unassigned
+            </Link>
+          </Button>
+          <Button
+            asChild
+            variant={checklistScope === "all" ? "default" : "outline"}
+          >
+            <Link href={`/app/workspaces/${workspaceId}/rooms/${room.id}?scope=all`}>
+              All tasks
+            </Link>
+          </Button>
+        </div>
+      </div>
+
       <ChecklistProgressCard
         completedCount={completedCount}
         label="Room progress"
@@ -116,6 +202,7 @@ export default async function RoomDetailPage({ params }: RoomDetailPageProps) {
           tasks={urgentTasks}
           title="Urgent now"
           variant="destructive"
+          members={members}
           workspaceId={workspaceId}
         />
       ) : null}
@@ -124,6 +211,7 @@ export default async function RoomDetailPage({ params }: RoomDetailPageProps) {
         emptyDescription="Add one above or open the detailed task filters to assign existing tasks here."
         emptyIcon={ClipboardCheck}
         emptyTitle={`No open ${room.name} tasks`}
+        members={members}
         tasks={openTasks}
         title="Open checklist"
         workspaceId={workspaceId}
@@ -131,6 +219,7 @@ export default async function RoomDetailPage({ params }: RoomDetailPageProps) {
 
       {doneTasks.length > 0 ? (
         <ChecklistSection
+          members={members}
           tasks={doneTasks}
           title="Done"
           workspaceId={workspaceId}

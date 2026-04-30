@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { Task } from "@/lib/db/types";
 import {
   getChecklistGroups,
+  filterRoomChecklistTasks,
   inferRoomChecklistCategory,
   isUrgentChecklistTask,
 } from "@/lib/tasks/checklist";
@@ -12,7 +13,7 @@ function task(overrides: Partial<Task>): Task {
     id: overrides.id ?? "task",
     workspace_id: "workspace",
     room_id: null,
-    assignee_id: null,
+    assignee_id: overrides.assignee_id ?? null,
     title: overrides.title ?? "Task",
     description: null,
     status: overrides.status ?? "todo",
@@ -69,5 +70,20 @@ describe("checklist helpers", () => {
     expect(inferRoomChecklistCategory("Yard / Outdoor")).toBe("cleaning");
     expect(inferRoomChecklistCategory("Garage / Storage")).toBe("donation");
     expect(inferRoomChecklistCategory("Kids Room")).toBe("packing");
+  });
+
+  it("filters room checklist tasks to mine and unassigned by default", () => {
+    const tasks = [
+      task({ id: "mine", assignee_id: "user-1" }),
+      task({ id: "unassigned", assignee_id: null }),
+      task({ id: "theirs", assignee_id: "user-2" }),
+    ];
+
+    expect(
+      filterRoomChecklistTasks(tasks, "user-1").map((item) => item.id),
+    ).toEqual(["mine", "unassigned"]);
+    expect(
+      filterRoomChecklistTasks(tasks, "user-1", "all").map((item) => item.id),
+    ).toEqual(["mine", "unassigned", "theirs"]);
   });
 });
